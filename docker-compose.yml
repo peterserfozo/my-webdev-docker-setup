@@ -1,0 +1,117 @@
+version: "3"
+
+services:
+  database:
+    image: ${DB_IMAGE:-wodby/mariadb:10.2-3.1.2}
+    container_name: "${PROJECT_NAME}_database"
+    stop_grace_period: 30s
+    environment:
+      MYSQL_ROOT_PASSWORD: $DB_ROOT_PASSWORD
+      MYSQL_DATABASE: $DB_NAME
+      MYSQL_USER: $DB_USER
+      MYSQL_PASSWORD: $DB_PASSWORD
+      POSTGRES_PASSWORD: $DB_PASSWORD
+      POSTGRES_DB: $DB_NAME
+      POSTGRES_USER: $DB_USER
+    volumes:
+#      - ./mariadb-init:/docker-entrypoint-initdb.d # Place init .sql file(s) here.
+      - db_data:/var/lib/mysql # I want to manage volumes manually.
+#      - ./postgres-init:/docker-entrypoint-initdb.d # Place init file(s) here.
+#      - /path/to/postgres/data/on/host:/var/lib/postgresql/data # I want to manage volumes manually.
+# If you would like to access to the database on your localhost add this
+# to your docker-composer.override.yml and expose the database port.
+#    networks:
+#      - web
+#      - default
+
+  php:
+    image: ${PHP_IMAGE:-wodby/drupal-php:7.1-dev-4.2.2}
+    container_name: "${PROJECT_NAME}_php"
+    environment:
+      PHP_SENDMAIL_PATH: /usr/sbin/sendmail -t -i -S mailhog:1025
+      DB_HOST: $DB_HOST
+      DB_USER: $DB_USER
+      DB_PASSWORD: $DB_PASSWORD
+      DB_NAME: $DB_NAME
+      DB_DRIVER: $DB_DRIVER
+      SIMPLETEST_BASE_URL: http://webserver
+      SIMPLETEST_DB: $DB_DRIVER://$DB_USER:$DB_PASSWORD@$DB_HOST/$DB_NAME
+      PHP_XDEBUG: 1
+      PHP_XDEBUG_DEFAULT_ENABLE: 1
+      PHP_XDEBUG_REMOTE_CONNECT_BACK: 0
+      PHP_XDEBUG_IDEKEY: PHPSTORM
+      PHP_XDEBUG_MAX_NESTING_LEVEL: 400
+# Without this CLI command debugging (Drush, PHPUnit, etc.) does not work.
+# https://www.jetbrains.com/help/phpstorm/zero-configuration-debugging.html#d478010e708
+      PHP_IDE_CONFIG: serverName=docker
+# https://docs.docker.com/docker-for-mac/networking/#there-is-no-docker0-bridge-on-macos#i-want-to-connect-from-a-container-to-a-service-on-the-host
+      PHP_XDEBUG_REMOTE_HOST: docker.for.mac.localhost
+## Read instructions at https://wodby.com/stacks/drupal/docs/local/xdebug/
+#      PHP_XDEBUG_REMOTE_HOST: 172.17.0.1 # Linux
+#      PHP_XDEBUG_REMOTE_HOST: 10.0.75.1 # Windows
+    volumes:
+    # Using cached for MacOS.
+    # https://docs.docker.com/docker-for-mac/osxfs-caching/#tuning-with-consistent-cached-and-delegated-configurations
+      - ./:/var/www/html:cached
+      - composer_data:/home/wodby/.composer
+## For Xdebug profiler files
+#      - files:/mnt/files
+
+  webserver:
+    image: ${WEBSERVER_IMAGE:-wodby/php-apache:2.4-3.0.1}
+    container_name: "${PROJECT_NAME}_webserver"
+    depends_on:
+      - php
+    environment:
+      APACHE_LOG_LEVEL: debug
+      APACHE_BACKEND_HOST: php
+      APACHE_SERVER_ROOT: /var/www/html/web
+      NGINX_STATIC_CONTENT_OPEN_FILE_CACHE: "off"
+      NGINX_ERROR_LOG_LEVEL: debug
+      NGINX_BACKEND_HOST: php
+      NGINX_SERVER_ROOT: /var/www/html/web
+#      NGINX_DRUPAL_FILE_PROXY_URL: http://example.com
+    volumes:
+    # Using cached for MacOS.
+    # https://docs.docker.com/docker-for-mac/osxfs-caching/#tuning-with-consistent-cached-and-delegated-configurations
+      - ./:/var/www/html:cached
+    labels:
+      - 'traefik.backend=${PROJECT_NAME}_webserver'
+      - 'traefik.enable=true'
+      - 'traefik.port=80'
+      - 'traefik.docker.network=web'
+      - 'traefik.frontend.rule=Host:${PROJECT_BASE_URL}'
+    networks:
+      - web
+      - default
+
+  mailhog:
+    image: mailhog/mailhog
+    container_name: "${PROJECT_NAME}_mailhog"
+    labels:
+      - 'traefik.backend=${PROJECT_NAME}_mailhog'
+      - 'traefik.enable=true'
+      - 'traefik.port=8025'
+      - 'traefik.docker.network=web'
+      - 'traefik.frontend.rule=Host:mailhog.${PROJECT_BASE_URL}'
+
+  phpcs:
+    image: mxr576/docker-phpcs
+    volumes:
+      - .:/data:cached
+    depends_on:
+      - php
+
+  redis:
+    image: ${REDIS_IMAGE:-wodby/redis:4.0-2.1.5}
+    container_name: "${PROJECT_NAME}_redis"
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD-redis}
+
+volumes:
+  db_data:
+  composer_data:
+
+networks:
+  web:
+    external: true
