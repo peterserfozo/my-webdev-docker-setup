@@ -61,6 +61,6 @@ mkdir -p sites/simpletest \
 exit
 ```
 
-### Credits
+## Credits
 **This setup is based on the [Docker4Drupal](https://github.com/wodby/docker4drupal) project
 and it uses containers created by [Wodby](wodby.com).**
