@@ -35,13 +35,20 @@ to your project and make your changes in there.
 
 ## Usage examples
 
-### Runing Drupal 8 PHPunit tests
+### xDebug without using Docker for Mac
+
+The `PHP_XDEBUG_REMOTE_HOST` variable must be overridden in docker-compose.override.yml
+or the `docker.for.mac.localhost` domain should be redirected to 127.0.0.1.
+
+### Running Drupal 8 PHPUnit tests
 
 If you are using the default image with `-dev` suffix then use the following command inside the php container:
 
 ```sh
 sudo -u root -E sudo -u www-data -E vendor/bin/phpunit ...
 ```
+
+
 
 **This setup is based on the [Docker4Drupal](https://github.com/wodby/docker4drupal) project
 and it uses containers created by [Wodby](wodby.com).**
