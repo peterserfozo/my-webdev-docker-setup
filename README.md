@@ -4,12 +4,12 @@ My Docker based local environment setup for web development
 An ideal Docker based local environment setup not only for Drupal 8 development.
 
 ## One-time only setup
-* Clone my Traefik configuration from [this](https://github.com/mxr576/my-traefik-docker) respository and start the
+* Clone my Traefik configuration from [this](https://github.com/mxr576/my-traefik-docker) repository and start the
 Traefik container with `docker-compose up -d`
 * Install and setup DNSMasq to redirect all request from .l domains to your
-localhost. (Or [add manually](https://wodby.com/stacks/drupal/docs/local/domains/) your project url (ex.: my-project.l) to your system's hosts file.)
+localhost. (Or [add manually](https://wodby.com/stacks/drupal/docs/local/domains/) your project URL (ex.: my-project.l) to your system's hosts file.)
 
-How it works? DNSMasq redirects all requests for .l domains to your local machine. Treafik watches incoming
+How does it work? DNSMasq redirects all requests for .l domains to your local machine. Treafik watches incoming
 requests to .l domains and based on labels in docker-compose.yml redirects requests to the proper containers.  
 
 ## How to use it
@@ -48,7 +48,19 @@ If you are using the default image with `-dev` suffix then use the following com
 sudo -u root -E sudo -u www-data -E vendor/bin/phpunit ...
 ```
 
+You may also run into permission problems is [DRUPAL_ROOT]/sites/simpletest
+folder is not writeable. Please use the following commands to create and set
+proper permissions on the simpletest folder:
 
+```sh
+cd [DRUPAL_ROOT] # ex.: /var/www/html/web
+sudo su # Switch to root user.
+mkdir -p sites/simpletest \
+    && chown -R www-data:wodby sites/simpletest \
+    && chmod 6750 sites/simpletest
+exit
+```
 
+### Credits
 **This setup is based on the [Docker4Drupal](https://github.com/wodby/docker4drupal) project
 and it uses containers created by [Wodby](wodby.com).**
