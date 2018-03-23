@@ -3,16 +3,16 @@ version: "3"
 services:
   database:
     image: ${DB_IMAGE:-wodby/mariadb:10.2-3.1.2}
-    container_name: "${PROJECT_NAME}_database"
+    container_name: "${PROJECT_NAME:-my_project}_database"
     stop_grace_period: 30s
     environment:
-      MYSQL_ROOT_PASSWORD: $DB_ROOT_PASSWORD
-      MYSQL_DATABASE: $DB_NAME
-      MYSQL_USER: $DB_USER
-      MYSQL_PASSWORD: $DB_PASSWORD
-      POSTGRES_PASSWORD: $DB_PASSWORD
-      POSTGRES_DB: $DB_NAME
-      POSTGRES_USER: $DB_USER
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-password}
+      MYSQL_DATABASE: ${DB_NAME:-drupal}
+      MYSQL_USER: ${DB_USER:-drupal}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-password}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+      POSTGRES_DB: ${DB_NAME:-drupal}
+      POSTGRES_USER: ${DB_USER:-drupal}
     volumes:
 #      - ./mariadb-init:/docker-entrypoint-initdb.d # Place init .sql file(s) here.
       - db_data:/var/lib/mysql # I want to manage volumes manually.
@@ -26,16 +26,16 @@ services:
 
   php:
     image: ${PHP_IMAGE:-wodby/drupal-php:7.1-dev-4.2.2}
-    container_name: "${PROJECT_NAME}_php"
+    container_name: "${PROJECT_NAME:-my_project}_php"
     environment:
       PHP_SENDMAIL_PATH: /usr/sbin/sendmail -t -i -S mailhog:1025
-      DB_HOST: $DB_HOST
-      DB_USER: $DB_USER
-      DB_PASSWORD: $DB_PASSWORD
-      DB_NAME: $DB_NAME
-      DB_DRIVER: $DB_DRIVER
+      DB_HOST: ${DB_HOST:-database}
+      DB_USER: ${DB_USER:-drupal}
+      DB_PASSWORD: ${DB_PASSWORD-password}
+      DB_NAME: ${DB_NAME:-drupal}
+      DB_DRIVER: ${DB_DRIVER:-mysql}
       SIMPLETEST_BASE_URL: http://webserver
-      SIMPLETEST_DB: $DB_DRIVER://$DB_USER:$DB_PASSWORD@$DB_HOST/$DB_NAME
+      SIMPLETEST_DB: ${DB_DRIVER:-mysql}://${DB_USER:-drupal}:${DB_PASSWORD-password}@${DB_HOST:-database}/${DB_NAME:-drupal}
       PHP_XDEBUG: 1
       PHP_XDEBUG_DEFAULT_ENABLE: 1
       PHP_XDEBUG_REMOTE_CONNECT_BACK: 0
@@ -59,7 +59,7 @@ services:
 
   webserver:
     image: ${WEBSERVER_IMAGE:-wodby/php-apache:2.4-3.0.1}
-    container_name: "${PROJECT_NAME}_webserver"
+    container_name: "${PROJECT_NAME:-my_project}_webserver"
     depends_on:
       - php
     environment:
@@ -76,27 +76,28 @@ services:
     # https://docs.docker.com/docker-for-mac/osxfs-caching/#tuning-with-consistent-cached-and-delegated-configurations
       - ./:/var/www/html:cached
     labels:
-      - 'traefik.backend=${PROJECT_NAME}_webserver'
+      - 'traefik.backend=${PROJECT_NAME:-my_project}_webserver'
       - 'traefik.enable=true'
       - 'traefik.port=80'
       - 'traefik.docker.network=web'
-      - 'traefik.frontend.rule=Host:${PROJECT_BASE_URL}'
+      - 'traefik.frontend.rule=Host:${PROJECT_BASE_URL:-my-project.l}'
     networks:
       - web
       - default
 
   mailhog:
     image: mailhog/mailhog
-    container_name: "${PROJECT_NAME}_mailhog"
+    container_name: "${PROJECT_NAME:-my_project}_mailhog"
     labels:
-      - 'traefik.backend=${PROJECT_NAME}_mailhog'
+      - 'traefik.backend=${PROJECT_NAME:-my_project}_mailhog'
       - 'traefik.enable=true'
       - 'traefik.port=8025'
       - 'traefik.docker.network=web'
-      - 'traefik.frontend.rule=Host:mailhog.${PROJECT_BASE_URL}'
+      - 'traefik.frontend.rule=Host:mailhog.${PROJECT_BASE_URL:-my-project.l}'
 
   phpcs:
     image: mxr576/docker-phpcs
+    container_name: "${PROJECT_NAME:-my_project}_phpcs"
     volumes:
       - .:/data:cached
     depends_on:
@@ -104,7 +105,7 @@ services:
 
   redis:
     image: ${REDIS_IMAGE:-wodby/redis:4.0-2.1.5}
-    container_name: "${PROJECT_NAME}_redis"
+    container_name: "${PROJECT_NAME:-my_project}_redis"
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD-redis}
 
