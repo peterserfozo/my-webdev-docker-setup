@@ -3,7 +3,7 @@ version: "3"
 services:
   database:
     image: ${DB_IMAGE:-wodby/mariadb:10.2-3.1.2}
-    container_name: "${PROJECT_NAME:-my_project}_database"
+    container_name: "${COMPOSE_PROJECT_NAME:-my_project}_database"
     stop_grace_period: 30s
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-password}
@@ -26,7 +26,7 @@ services:
 
   php:
     image: ${PHP_IMAGE:-wodby/drupal-php:7.1-dev-4.2.2}
-    container_name: "${PROJECT_NAME:-my_project}_php"
+    container_name: "${COMPOSE_PROJECT_NAME:-my_project}_php"
     environment:
       PHP_SENDMAIL_PATH: /usr/sbin/sendmail -t -i -S mailhog:1025
       DB_HOST: ${DB_HOST:-database}
@@ -59,7 +59,7 @@ services:
 
   webserver:
     image: ${WEBSERVER_IMAGE:-wodby/php-apache:2.4-3.0.1}
-    container_name: "${PROJECT_NAME:-my_project}_webserver"
+    container_name: "${COMPOSE_PROJECT_NAME:-my_project}_webserver"
     depends_on:
       - php
     environment:
@@ -76,7 +76,7 @@ services:
     # https://docs.docker.com/docker-for-mac/osxfs-caching/#tuning-with-consistent-cached-and-delegated-configurations
       - ./:/var/www/html:cached
     labels:
-      - 'traefik.backend=${PROJECT_NAME:-my_project}_webserver'
+      - 'traefik.backend=${COMPOSE_PROJECT_NAME:-my_project}_webserver'
       - 'traefik.enable=true'
       - 'traefik.port=80'
       - 'traefik.docker.network=web'
@@ -87,9 +87,9 @@ services:
 
   mailhog:
     image: mailhog/mailhog
-    container_name: "${PROJECT_NAME:-my_project}_mailhog"
+    container_name: "${COMPOSE_PROJECT_NAME:-my_project}_mailhog"
     labels:
-      - 'traefik.backend=${PROJECT_NAME:-my_project}_mailhog'
+      - 'traefik.backend=${COMPOSE_PROJECT_NAME:-my_project}_mailhog'
       - 'traefik.enable=true'
       - 'traefik.port=8025'
       - 'traefik.docker.network=web'
@@ -97,7 +97,7 @@ services:
 
   phpcs:
     image: mxr576/docker-phpcs
-    container_name: "${PROJECT_NAME:-my_project}_phpcs"
+    container_name: "${COMPOSE_PROJECT_NAME:-my_project}_phpcs"
     volumes:
       - .:/data:cached
     depends_on:
@@ -105,7 +105,7 @@ services:
 
   redis:
     image: ${REDIS_IMAGE:-wodby/redis:4.0-2.1.5}
-    container_name: "${PROJECT_NAME:-my_project}_redis"
+    container_name: "${COMPOSE_PROJECT_NAME:-my_project}_redis"
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD-redis}
 
