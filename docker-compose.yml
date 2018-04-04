@@ -94,6 +94,10 @@ services:
       - 'traefik.port=8025'
       - 'traefik.docker.network=web'
       - 'traefik.frontend.rule=Host:mailhog.${PROJECT_BASE_URL:-my-project.l}'
+    networks:
+      - web
+      - default
+
 
   phpcs:
     image: mxr576/docker-phpcs
