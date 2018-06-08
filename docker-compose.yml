@@ -34,8 +34,6 @@ services:
       DB_PASSWORD: ${DB_PASSWORD-password}
       DB_NAME: ${DB_NAME:-drupal}
       DB_DRIVER: ${DB_DRIVER:-mysql}
-      SIMPLETEST_BASE_URL: http://webserver
-      SIMPLETEST_DB: ${DB_DRIVER:-mysql}://${DB_USER:-drupal}:${DB_PASSWORD-password}@${DB_HOST:-database}/${DB_NAME:-drupal}
       PHP_XDEBUG: 1
       PHP_XDEBUG_DEFAULT_ENABLE: 1
       PHP_XDEBUG_REMOTE_CONNECT_BACK: 0
@@ -49,6 +47,9 @@ services:
 ## Read instructions at https://wodby.com/stacks/drupal/docs/local/xdebug/
 #      PHP_XDEBUG_REMOTE_HOST: 172.17.0.1 # Linux
 #      PHP_XDEBUG_REMOTE_HOST: 10.0.75.1 # Windows
+      SIMPLETEST_BASE_URL: http://webserver
+      SIMPLETEST_DB: ${DB_DRIVER:-mysql}://${DB_USER:-drupal}:${DB_PASSWORD-password}@${DB_HOST:-database}/${DB_NAME:-drupal}
+      MINK_DRIVER_ARGS_WEBDRIVER: '["chrome", null, "http://chrome:4444/wd/hub"]'
     volumes:
     # Using cached for MacOS.
     # https://docs.docker.com/docker-for-mac/osxfs-caching/#tuning-with-consistent-cached-and-delegated-configurations
@@ -98,7 +99,6 @@ services:
       - web
       - default
 
-
   phpcs:
     image: mxr576/docker-phpcs
     container_name: "${COMPOSE_PROJECT_NAME:-my_project}_phpcs"
@@ -112,6 +112,12 @@ services:
     container_name: "${COMPOSE_PROJECT_NAME:-my_project}_redis"
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD-redis}
+
+  webdriver:
+    image: selenium/standalone-chrome:3
+    # Unfortunatelly its seems this image is not working at this moment.
+    # https://www.drupal.org/project/drupalci_environments/issues/2978243
+    # image: drupalci/webdriver-chromedriver:dev
 
 volumes:
   db_data:
