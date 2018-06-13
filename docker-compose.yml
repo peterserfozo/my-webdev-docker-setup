@@ -51,7 +51,7 @@ services:
       SIMPLETEST_DB: ${DB_DRIVER:-mysql}://${DB_USER:-drupal}:${DB_PASSWORD-password}@${DB_HOST:-database}/${DB_NAME:-drupal}
       MINK_DRIVER_ARGS_WEBDRIVER: '["chrome", null, "http://webdriver:4444/wd/hub"]'
       # Force all BrowserTestBase (including legacy JavascriptTestBase) tests to use webdriver:
-      MINK_DRIVER_CLASS: 'Drupal\FunctionalJavascriptTests\DrupalSelenium2Driver'
+      # MINK_DRIVER_CLASS: 'Drupal\FunctionalJavascriptTests\DrupalSelenium2Driver'
     volumes:
     # Using cached for MacOS.
     # https://docs.docker.com/docker-for-mac/osxfs-caching/#tuning-with-consistent-cached-and-delegated-configurations
